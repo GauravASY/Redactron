@@ -1,7 +1,7 @@
 import gradio as gr
 from fastapi import FastAPI
-import pymupdf, logging
-import uvicorn
+import logging,uvicorn
+from utils.text_extraction import pdf_extractor
 
 
 app = FastAPI()
@@ -12,9 +12,12 @@ logging.basicConfig(
 
 def redaction(docs):
     logging.info(f"The document uploaded is : \n{docs}")
+    total_text = ""
     try:
-        pdf_doc = pymupdf.open(docs)
-        logging.info(pdf_doc) 
+        if docs.endswith(".pdf"):
+            return pdf_extractor(docs)
+        else:
+            logging.info("The uploaded document is not a pdf file")
     except Exception as e:
         logging.error(f"Error in redaction function : \n{e}")
 
