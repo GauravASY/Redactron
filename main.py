@@ -2,6 +2,7 @@ import gradio as gr
 from fastapi import FastAPI
 import logging,uvicorn
 from utils.text_extraction import pdf_extractor
+from utils.redaction import regex_redactor
 
 
 app = FastAPI()
@@ -12,14 +13,16 @@ logging.basicConfig(
 
 def redaction(docs):
     logging.info(f"The document uploaded is : \n{docs}")
-    total_text = ""
+    redacted_regex_text = ""
     try:
         if docs.endswith(".pdf"):
-            return pdf_extractor(docs)
+            extracted_text = pdf_extractor(docs)
+            redacted_regex_text = regex_redactor(extracted_text)
         else:
             logging.info("The uploaded document is not a pdf file")
     except Exception as e:
         logging.error(f"Error in redaction function : \n{e}")
+    return redacted_regex_text
 
 # Gradio UI for uplaoding the documents
 with gr.Blocks() as demo:
@@ -31,9 +34,8 @@ with gr.Blocks() as demo:
     )
     upload.click(fn=redaction,
     inputs=upload,
-    outputs=gr.Textbox(
-        label="Redacted Doc",
-        lines=10
+    outputs=gr.Markdown(
+        label="Redacted Doc"
     ))
 
 # Mounting the gradio on FastAPI instance at "/"
